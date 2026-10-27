@@ -1,40 +1,115 @@
-# SMS Spam Detection — Comparative ML Study
+# Comparative Study of Text Classification Algorithms for SMS Spam Detection
 
-Dataset: UCI SMS Spam Collection, https://archive.ics.uci.edu/dataset/228/sms+spam+collection
+A reproducible machine learning project comparing text classification algorithms on the benchmark **UCI SMS Spam Collection** dataset.
 
-## Windows VS Code setup
-1. Install Python 3.11+ and VS Code with Microsoft's Python extension.
-2. Download ZIP: https://archive.ics.uci.edu/static/public/228/sms+spam+collection.zip
-3. Extract `SMSSpamCollection` (no file extension) and put it in the `data` directory beside `main.py`.
-4. Open this folder in VS Code.
-5. In VS Code > Terminal > New Terminal (PowerShell):
-   ```powershell
-   py -m venv .venv
-   .\.venv\Scripts\Activate.ps1
-   python -m pip install -r requirements.txt
-   python main.py
-   ```
-   If PowerShell blocks activation, run without activating:
-   ```powershell
-   .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-   .\.venv\Scripts\python.exe main.py
-   ```
-6. Inspect `results/model_comparison.csv`, `results/what_if_tfidf_features.csv`, confusion matrix PNGs and charts. Results are generated from YOUR execution, not supplied as invented values.
-7. Commit source + README + your generated results to GitHub (and submit to Google Classroom). Do not commit the `.venv` folder.
+---
 
-## Protocol
-- Remove exact duplicate SMS texts before splitting; lowercase / replace URLs, digits, punctuation.
-- Stratified 80/20 holdout split, random_state=42.
-- TF-IDF unigrams and bigrams, min_df=2, max_features=3000, learned only on training data (via Pipeline).
-- Classifiers evaluated:
-  1. Multinomial Naïve Bayes (`MultinomialNB(alpha=1.0)`)
-  2. Decision Tree (`DecisionTreeClassifier(max_depth=30, random_state=42)`)
-  3. K-Nearest Neighbours (`KNeighborsClassifier(n_neighbors=5, metric='cosine', algorithm='brute')`)
-- Accuracy, precision, recall, and F1 based on the **spam** (positive) class.
-- Best performer selected using spam F1; investigate precision/recall tradeoffs.
-- What-if: change only max_features (500, 3000, 5000) for KNN on the same split.
+## 1. Project Overview
 
-## Notes for the viva
-- False positive: a legitimate ham message marked spam. False negative: a spam message marked ham.
-- Precision = TP/(TP+FP). Recall = TP/(TP+FN). F1 = harmonic mean of precision and recall.
-- Class imbalance means accuracy alone can be misleading. Naïve Bayes leverages conditional word probabilities and often yields very high precision; Decision Trees create interpretable rule splits but can struggle with high-dimensional sparsity; KNN computes cosine similarity against stored training instances but is computationally intensive at inference time.
+- **Algorithms Evaluated**:
+  1. **Multinomial Naïve Bayes** (`MultinomialNB`)
+  2. **Decision Tree** (`DecisionTreeClassifier`)
+  3. **K-Nearest Neighbours** (`KNeighborsClassifier`)
+- **Dataset**: UCI SMS Spam Collection (5,166 unique messages after deduplication).
+- **Split**: 80:20 stratified holdout split (`random_state=42`).
+- **Feature Extraction**: TF-IDF (unigrams & bigrams, `min_df=2`, `max_features=3000`) fitted only on training data to prevent leakage.
+- **Detailed Academic Report**: See [REPORT.md](REPORT.md) for full theory, math, confusion matrix breakdowns, and literature references.
+
+---
+
+## 2. Experimental Results Summary
+
+*(Holdout Test Set: 1,034 samples — 903 Ham, 131 Spam. Positive class = **Spam**)*
+
+| Rank | Model | Accuracy | Precision (Spam) | Recall (Spam) | F1-Score (Spam) |
+| :---: | :--- | :---: | :---: | :---: | :---: |
+| **1** | **K-Nearest Neighbours (KNN)** | **0.9758** | 0.9818 | 0.8244 | **0.8963** |
+| **2** | **Multinomial Naïve Bayes** | 0.9739 | **1.0000** | 0.7939 | 0.8851 |
+| **3** | **Decision Tree** | 0.9623 | 0.8594 | **0.8397** | 0.8494 |
+
+### Confusion Matrix Counts (Test Set)
+- **KNN**: TN = 901, FP = 2, FN = 23, TP = 108
+- **Naïve Bayes**: TN = 903, **FP = 0**, FN = 27, TP = 104 *(Zero false alarms)*
+- **Decision Tree**: TN = 885, FP = 18, FN = 21, TP = 110
+
+### What-If Experiment (KNN Vocabulary Capacity)
+| `max_features` | Accuracy | Precision | Recall | F1-Score |
+| :---: | :---: | :---: | :---: | :---: |
+| **500** | 0.9700 | 0.9310 | 0.8244 | 0.8745 |
+| **3000** | 0.9758 | 0.9818 | 0.8244 | 0.8963 |
+| **5000** | **0.9787** | **0.9823** | **0.8473** | **0.9098** |
+
+---
+
+## 3. Directory Structure
+
+```
+SMS_Spam_Classification_Project/
+├── data/
+│   └── SMSSpamCollection          # Official UCI dataset
+├── results/
+│   ├── model_comparison.csv       # Comparative metrics table
+│   ├── model_comparison.png       # 3-model comparative bar chart
+│   ├── test_predictions.csv      # Test samples with predictions
+│   ├── what_if_tfidf_features.csv # KNN feature experiment table
+│   ├── what_if_experiment.png     # KNN feature experiment plot
+│   ├── confusion_knn.png          # KNN confusion matrix plot
+│   ├── confusion_naive_bayes.png  # Naïve Bayes confusion matrix plot
+│   └── confusion_decision_tree.png# Decision Tree confusion matrix plot
+├── main.py                        # Executable ML pipeline
+├── REPORT.md                      # Academic report (theory, viva notes)
+├── requirements.txt               # Pinned library dependencies
+├── README.md                      # Project documentation
+└── .gitignore                     # Git ignore rules (.venv, cache)
+```
+
+---
+
+## 4. Setup & Execution Instructions (Windows PowerShell)
+
+### Prerequisites
+- Python 3.11+ installed.
+
+### Step 1: Create and Activate Virtual Environment
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+*(If PowerShell restricts script execution, run: `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` or directly use `.\.venv\Scripts\python.exe`)*
+
+### Step 2: Install Dependencies
+```powershell
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+### Step 3: Run the Pipeline
+```powershell
+python main.py
+```
+This executes data cleaning, training, evaluation, what-if experiment, and regenerates all CSVs and visualization plots inside `results/`.
+
+---
+
+## 5. Software Environment Record
+
+- **Python**: 3.11.9
+- **scikit-learn**: 1.9.1
+- **pandas**: 2.3.3
+- **matplotlib**: 3.11.2
+- **numpy**: 2.4.6
+- **scipy**: 1.17.1
+
+---
+
+## 6. Viva Cheat Sheet
+
+1. **Why is F1-score preferred over Accuracy?**  
+   The dataset has an 87.4% majority of "ham" messages. A baseline model predicting "ham" every time would achieve 87.4% accuracy but a 0% spam F1-score.
+2. **What is a False Positive vs. False Negative in spam filtering?**  
+   - **False Positive (FP)**: A genuine personal message misclassified as spam (very bad user experience).
+   - **False Negative (FN)**: A spam message that slips into the inbox (minor annoyance).
+3. **Why did Naïve Bayes achieve 1.0000 Precision?**  
+   Laplace smoothing and Bayesian likelihood ratios required strong, undisputed spam token evidence before flagging a text as spam, producing zero false alarms (FP = 0).
+4. **Why did KNN win overall F1?**  
+   By using **cosine metric**, KNN normalized vector lengths and compared semantic orientations, avoiding the Euclidean distance degradation often seen in sparse high-dimensional text.
