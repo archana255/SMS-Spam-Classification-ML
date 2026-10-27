@@ -10,7 +10,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import (accuracy_score, precision_score, recall_score,
                              f1_score, confusion_matrix, ConfusionMatrixDisplay,
@@ -31,10 +30,9 @@ def clean_text(text):
 def make_models(max_features=3000):
     tfidf = lambda: TfidfVectorizer(max_features=max_features, ngram_range=(1, 2), min_df=2)
     return {
+        'Naive Bayes': Pipeline([('tfidf', tfidf()), ('classifier', MultinomialNB(alpha=1.0))]),
         'Decision Tree': Pipeline([('tfidf', tfidf()), ('classifier', DecisionTreeClassifier(random_state=SEED, max_depth=30))]),
         'KNN': Pipeline([('tfidf', tfidf()), ('classifier', KNeighborsClassifier(n_neighbors=5, metric='cosine', algorithm='brute'))]),
-        'SVM': Pipeline([('tfidf', tfidf()), ('classifier', LinearSVC(random_state=SEED, max_iter=5000))]),
-        'Naive Bayes': Pipeline([('tfidf', tfidf()), ('classifier', MultinomialNB(alpha=1.0))]),
     }
 
 def evaluate(model, x_train, x_test, y_train, y_test):
@@ -90,22 +88,22 @@ def main():
     plt.tight_layout()
     plt.savefig(OUT / 'model_comparison.png', dpi=160)
     plt.close()
-    # One controlled what-if: change ONLY TF-IDF max_features; retain identical data split and SVM model.
+    # One controlled what-if: change ONLY TF-IDF max_features; retain identical data split and KNN model.
     whatif = []
     for count in (500, 3000, 5000):
-        model = make_models(max_features=count)['SVM']
+        model = make_models(max_features=count)['KNN']
         pred, metrics = evaluate(model, x_train, x_test, y_train, y_test)
         whatif.append({'max_features': count, **metrics})
     whatif_df = pd.DataFrame(whatif)
     whatif_df.to_csv(OUT / 'what_if_tfidf_features.csv', index=False)
-    print('\nWHAT-IF: SVM max_features\n', whatif_df.to_string(index=False, float_format=lambda x:f'{x:.4f}'))
+    print('\nWHAT-IF: KNN max_features\n', whatif_df.to_string(index=False, float_format=lambda x:f'{x:.4f}'))
     plt.figure(figsize=(7,4))
     for metric in ('Precision','Recall','F1'):
         plt.plot(whatif_df['max_features'], whatif_df[metric], marker='o', label=metric)
     plt.ylim(0,1.05)
     plt.xlabel('TF-IDF max_features')
     plt.ylabel('Spam-class score')
-    plt.title('What-if: TF-IDF vocabulary size with SVM')
+    plt.title('What-if: TF-IDF vocabulary size with KNN')
     plt.legend()
     plt.tight_layout()
     plt.savefig(OUT / 'what_if_experiment.png', dpi=160)

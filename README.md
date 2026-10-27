@@ -26,12 +26,15 @@ Dataset: UCI SMS Spam Collection, https://archive.ics.uci.edu/dataset/228/sms+sp
 - Remove exact duplicate SMS texts before splitting; lowercase / replace URLs, digits, punctuation.
 - Stratified 80/20 holdout split, random_state=42.
 - TF-IDF unigrams and bigrams, min_df=2, max_features=3000, learned only on training data (via Pipeline).
-- DecisionTree(max_depth=30), KNN(k=5, cosine), LinearSVC, MultinomialNB(alpha=1).
-- Accuracy, precision, recall and F1 based on the **spam** (positive) class.
+- Classifiers evaluated:
+  1. Multinomial Naïve Bayes (`MultinomialNB(alpha=1.0)`)
+  2. Decision Tree (`DecisionTreeClassifier(max_depth=30, random_state=42)`)
+  3. K-Nearest Neighbours (`KNeighborsClassifier(n_neighbors=5, metric='cosine', algorithm='brute')`)
+- Accuracy, precision, recall, and F1 based on the **spam** (positive) class.
 - Best performer selected using spam F1; investigate precision/recall tradeoffs.
-- What-if: change only max_features (500,3000,5000) for SVM on the same split.
+- What-if: change only max_features (500, 3000, 5000) for KNN on the same split.
 
 ## Notes for the viva
-False positive: a legitimate ham message marked spam. False negative: a spam message marked ham.
-Precision = TP/(TP+FP). Recall = TP/(TP+FN). F1 = harmonic mean of precision and recall.
-Class imbalance means accuracy alone can be misleading. SVM often fits sparse TF-IDF well; NB benefits from word frequencies, Decision Trees can overfit sparse text, KNN requires expensive distance comparisons. These are hypotheses, not claimed measured outcomes.
+- False positive: a legitimate ham message marked spam. False negative: a spam message marked ham.
+- Precision = TP/(TP+FP). Recall = TP/(TP+FN). F1 = harmonic mean of precision and recall.
+- Class imbalance means accuracy alone can be misleading. Naïve Bayes leverages conditional word probabilities and often yields very high precision; Decision Trees create interpretable rule splits but can struggle with high-dimensional sparsity; KNN computes cosine similarity against stored training instances but is computationally intensive at inference time.
